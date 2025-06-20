@@ -13,7 +13,7 @@ clipper/.next/
 
 # production
 /build
-
+/backend/clipper_backend/media
 
 # misc
 .DS_Store
