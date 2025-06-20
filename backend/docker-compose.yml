@@ -1,0 +1,43 @@
+services:
+  web:
+    build: ./clipper_backend
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./clipper_backend/:/usr/src/clipper_backend/
+      - media_files:/usr/src/clipper_backend/media_files/
+    ports:
+      - 8000:8000
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - db
+      - redis
+  db:
+    image: postgres:15
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=postgresuser
+      - POSTGRES_PASSWORD=postgrespassword
+      - POSTGRES_DB=clipper
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  celery:
+    build: ./clipper_backend
+    command: celery -A clipper_backend worker -l info
+    volumes:
+      - ./clipper_backend/:/usr/src/clipper_backend/
+      - media_files:/usr/src/clipper_backend/media_files/
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - db
+      - redis
+
+volumes:
+  postgres_data:
+  media_files:
