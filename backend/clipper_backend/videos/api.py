@@ -17,8 +17,8 @@ def upload_video(request):
     original_filename=video_file.name,
     original_file=video_file,
     file_size=video_file.size,
-    height=request.data.get("height", 0),
-    width=request.data.get("width", 0),
+    height=0,
+    width=0,
     status="uploading",
   )
   
@@ -35,6 +35,11 @@ def upload_video(request):
 def video_status(request, video_id):
   try:
     video = VideoFile.objects.get(id=video_id)
+    
+    proxy_url = None
+    if video.proxy_file:
+      proxy_url = request.build_absolute_uri(video.proxy_file.url)
+      
     return Response({
       "video_id": str(video.id),
       "status": video.status,
@@ -42,7 +47,7 @@ def video_status(request, video_id):
       "width": video.width,
       "height": video.height,
       "duration": video.duration,
-      "proxy_url": video.proxy_file.url if video.proxy_file else None,
+      "proxy_url": proxy_url,
       "error": video.error_message,
     })
   except VideoFile.DoesNotExist:

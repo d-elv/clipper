@@ -52,7 +52,7 @@ export default function Home() {
           setProcessing(false);
           setError(data.error || "Video processing failed");
         } else if (data.status === "processing") {
-          const timeout = setTimeout(() => pollVideoStatus(videoId), 2000);
+          setTimeout(() => pollVideoStatus(videoId), 2000);
         }
       } catch (error) {
         console.log("Error polling video status", error);
