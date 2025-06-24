@@ -6,17 +6,34 @@ import {
 } from "@/util/formatters";
 import { useEffect, useRef, useState } from "react";
 import { EditSidebar } from "@/app/components/EditSidebar";
+import { useSearchParams } from "next/navigation";
+import { PauseIcon, PlayIcon } from "lucide-react";
+import apiService from "@/app/services/apiServices";
+
+interface VideoData {
+  id: string;
+  status: string;
+  original_filename: string;
+  width: number;
+  height: number;
+  duration: number;
+  proxy_url: string;
+  error_message: boolean;
+}
 
 interface Clip {
   inPoint: number;
   outPoint: number;
   duration: number;
   name: string;
-  originalFilename: string;
+  filename: string;
 }
 
 export default function EditPage() {
+  const searchParams = useSearchParams();
+  const videoId = searchParams.get("id");
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [videoData, setVideoData] = useState<VideoData | null>(null);
   const progressContainerRef = useRef<HTMLDivElement>(null);
   const [progressPercent, setProgressPercent] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -25,6 +42,17 @@ export default function EditPage() {
   const [outPoint, setOutPoint] = useState<number | null>(null);
   const [clips, setClips] = useState<Clip[]>([]);
   const [lastKeyStroke, setLastKeyStroke] = useState<string | null>(null);
+
+  async function getVideoInfo() {
+    const url = `/api/videos/status/`;
+    const tempVideoData = await apiService.get(url, videoId);
+    console.log(tempVideoData);
+    setVideoData(tempVideoData);
+  }
+
+  useEffect(() => {
+    getVideoInfo();
+  }, []);
 
   // Updates the progress bar as the video plays - also requests animation frames for smooth updating
   useEffect(() => {
@@ -178,7 +206,7 @@ export default function EditPage() {
   }, []);
 
   function createClipFromSelection() {
-    if (!inPoint || !outPoint) return;
+    if (!inPoint || !outPoint || !videoData) return;
 
     const clipDuration = outPoint - inPoint;
 
@@ -187,7 +215,7 @@ export default function EditPage() {
       outPoint,
       duration: clipDuration,
       name: `Clip ${String(clips.length + 1).padStart(3, "0")}`,
-      originalFilename: "local-video-player_Demo.mp4",
+      filename: videoData.original_filename,
     };
     setClips((prevClips) => [...prevClips, newClip]);
     setInPoint(null);
@@ -198,19 +226,25 @@ export default function EditPage() {
     <div>
       <div className="flex flex-col items-center justify-center">
         <h2 className="rounded-2xl px-8 py-4 text-center text-4xl font-bold text-white">
-          Create Your Clips
+          {videoData?.original_filename
+            ? String(videoData.original_filename).slice(
+                0,
+                videoData.original_filename.length - 4,
+              )
+            : "Create Your Clips"}
         </h2>
         {/* VIDEO PLAYER */}
         <div className="relative h-auto md:max-w-8/12">
-          <video
-            className="h-auto max-w-full rounded-tl-sm rounded-tr-sm"
-            ref={videoRef}
-          >
-            <source
-              src="/testing_videos/local-video-player_Demo.mp4"
-              type="video/mp4"
-            ></source>
-          </video>
+          {videoData ? (
+            <video
+              className="h-auto max-w-full rounded-tl-sm rounded-tr-sm"
+              ref={videoRef}
+            >
+              <source src={videoData.proxy_url} type="video/mp4"></source>
+            </video>
+          ) : (
+            <p>Loading...</p>
+          )}
 
           {/* VIDEO CONTROLS */}
           <div className="flex h-28 flex-col rounded-br-sm rounded-bl-sm bg-gray-200">
@@ -219,41 +253,19 @@ export default function EditPage() {
               id="progress-bar-container"
             >
               {isPlaying ? (
-                <svg
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  className="z-10 ml-1 size-6 hover:cursor-pointer"
+                <PauseIcon
                   onClick={(event) => {
                     event.stopPropagation();
                     handlePlayPause();
                   }}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M15.75 5.25v13.5m-7.5-13.5v13.5"
-                  />
-                </svg>
+                />
               ) : (
-                <svg
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  className="z-10 ml-1 size-6 hover:cursor-pointer"
+                <PlayIcon
                   onClick={(event) => {
                     event.stopPropagation();
                     handlePlayPause();
                   }}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z"
-                  />
-                </svg>
+                />
               )}
 
               <div
@@ -379,7 +391,7 @@ export default function EditPage() {
               </p>
               <p className="text-sm">
                 <span className="font-bold">Original Name:</span>{" "}
-                {clip.originalFilename}
+                {clip.filename}
               </p>
             </div>
           );

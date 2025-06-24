@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 import uuid
 
 class VideoFile(models.Model):
@@ -19,4 +20,7 @@ class VideoFile(models.Model):
   duration = models.FloatField(null=True, blank=True)
   created_at = models.DateTimeField(auto_now_add=True)
   error_message = models.TextField(null=True, blank=True)
+  
+  def proxy_url(self):
+    return f"{settings.WEBSITE_URL}{self.proxy_file.url}"
   

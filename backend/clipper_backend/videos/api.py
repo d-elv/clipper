@@ -1,7 +1,9 @@
+from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
+from .serializers import VideoFileSerializer
 from .models import VideoFile
 from .tasks import create_proxy
 
@@ -35,20 +37,8 @@ def upload_video(request):
 def video_status(request, video_id):
   try:
     video = VideoFile.objects.get(id=video_id)
-    
-    proxy_url = None
-    if video.proxy_file:
-      proxy_url = request.build_absolute_uri(video.proxy_file.url)
-      
-    return Response({
-      "video_id": str(video.id),
-      "status": video.status,
-      "filename": video.original_filename,
-      "width": video.width,
-      "height": video.height,
-      "duration": video.duration,
-      "proxy_url": proxy_url,
-      "error": video.error_message,
-    })
+    serializer = VideoFileSerializer(video)
+    return JsonResponse(serializer.data)
+  
   except VideoFile.DoesNotExist:
     return Response({"error": "Video not found"}, status=status.HTTP_404_NOT_FOUND)

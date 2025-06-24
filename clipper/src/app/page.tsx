@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { ChangeEvent, useCallback, useState } from "react";
+import Link from "next/link";
+import { ChangeEvent, useState } from "react";
 
 interface VideoStatus {
   video_id: string;
@@ -17,51 +17,51 @@ export default function Home() {
   const [processing, setProcessing] = useState(false);
   const [videoId, setVideoId] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [proxyUrl, setProxyUrl] = useState("");
   const [status, setStatus] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
 
   function setVideo(event: ChangeEvent<HTMLInputElement>) {
     if (event.target.files && event.target.files.length > 0) {
       const tempVideo = event.target.files[0];
       setDataVideo(tempVideo);
-      setError(null);
     }
   }
 
-  const pollVideoStatus = useCallback(
-    async (videoId: string) => {
-      try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_HOST}/api/videos/status/${videoId}/`,
-        );
+  console.log(status);
 
-        if (!response.ok) {
-          throw new Error(`HTTP Error: ${response.status}`);
-        }
+  async function pollVideoStatus(videoId: string) {
+    try {
+      console.log("polling video status", videoId);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_HOST}/api/videos/status/${videoId}/`,
+      );
 
-        const data: VideoStatus = await response.json();
-        setStatus(data.status);
-
-        if (data.status === "completed" && data.proxy_url) {
-          setProcessing(false);
-          router.push(
-            `/edit?videoId=${videoId}&proxyUrl=${encodeURIComponent(data.proxy_url)}&filename=${encodeURIComponent(data.filename)}`,
-          );
-        } else if (data.status === "failed") {
-          setProcessing(false);
-          setError(data.error || "Video processing failed");
-        } else if (data.status === "processing") {
-          setTimeout(() => pollVideoStatus(videoId), 2000);
-        }
-      } catch (error) {
-        console.log("Error polling video status", error);
-        setError("Failed to get video status");
-        setProcessing(false);
+      if (!response.ok) {
+        throw new Error(`HTTP Error: ${response.status}`);
       }
-    },
-    [router],
-  );
+
+      console.log(response);
+      const data: VideoStatus = await response.json();
+      console.log("data.status", data.status);
+      setStatus(data.status);
+
+      if (data.status === "completed" && data.proxy_url) {
+        setProcessing(false);
+        setProxyUrl(data.proxy_url);
+        console.log("Proxy url set");
+      } else if (data.status === "failed") {
+        setProcessing(false);
+        setError(data.error || "Video processing failed");
+      } else if (data.status === "uploading" || data.status === "processing") {
+        setTimeout(() => pollVideoStatus(videoId), 2000);
+      }
+    } catch (error) {
+      console.log("Error polling video status", error);
+      setError("Failed to get video status");
+      setProcessing(false);
+    }
+  }
 
   async function handleUpload() {
     if (!dataVideo) return;
@@ -128,7 +128,7 @@ export default function Home() {
         <h1 className="text-5xl text-white">Upload a video</h1>
       </header>
       <main className="w-full max-w-md">
-        <div className="bg-ffmpeg-green-200 space-y-4 rounded-xl p-4 text-gray-700">
+        <div className="bg-ffmpeg-green-200 flex flex-col space-y-4 rounded-xl p-4 text-gray-700">
           <input
             type="file"
             accept="video/*"
@@ -138,7 +138,7 @@ export default function Home() {
             className="w-full"
           />
 
-          {dataVideo && !uploading && !processing && (
+          {dataVideo && !uploading && !processing && !proxyUrl && (
             <div className="space-y-2">
               <p className="text-sm">Selected: {dataVideo.name}</p>
               <p className="text-sm text-gray-800">
@@ -190,6 +190,17 @@ export default function Home() {
                 </div>
               )}
             </div>
+          )}
+          {proxyUrl && (
+            <Link
+              href={{
+                pathname: `/edit/${videoId}`,
+                query: { id: videoId },
+              }}
+              className="ffmpeg-green-300 border-ffmpeg-green-800 rounded-2xl border p-4 text-center text-lg text-white"
+            >
+              Proceed to Edit
+            </Link>
           )}
         </div>
       </main>
