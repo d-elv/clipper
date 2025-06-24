@@ -194,7 +194,7 @@ export default function Home() {
           {proxyUrl && (
             <Link
               href={{
-                pathname: `/edit/${videoId}`,
+                pathname: `/clip/${videoId}`,
                 query: { id: videoId },
               }}
               className="ffmpeg-green-300 border-ffmpeg-green-800 rounded-2xl border p-4 text-center text-lg text-white"

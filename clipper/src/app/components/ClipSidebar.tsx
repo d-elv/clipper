@@ -55,7 +55,7 @@ function MobileNav() {
   );
 }
 
-export function EditSidebar({ isOpen }: { isOpen: boolean }) {
+export function ClipSidebar({ isOpen }: { isOpen: boolean }) {
   return (
     <div className="sticky top-0 z-10 flex flex-col bg-orange-50">
       <div className="flex flex-row items-center justify-between p-2">

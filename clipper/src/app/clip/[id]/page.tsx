@@ -5,7 +5,7 @@ import {
   formatSecondsToTimecode,
 } from "@/util/formatters";
 import { useEffect, useRef, useState } from "react";
-import { EditSidebar } from "@/app/components/EditSidebar";
+import { ClipSidebar } from "@/app/components/ClipSidebar";
 import { useSearchParams } from "next/navigation";
 import { PauseIcon, PlayIcon } from "lucide-react";
 import apiService from "@/app/services/apiServices";
