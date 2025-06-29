@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import VideoFile
+from .models import VideoFile, ClipFile
 
 class VideoFileSerializer(serializers.ModelSerializer):
   proxy_url = serializers.SerializerMethodField()
@@ -20,4 +20,23 @@ class VideoFileSerializer(serializers.ModelSerializer):
   def get_proxy_url(self, obj):
     if obj.proxy_file:
       return obj.proxy_url()
+    return None
+
+
+class ClipFileSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = ClipFile
+    fields = (
+      "id",
+      "status",
+      "clip_name",
+      "clip_url",
+      "duration",
+      "file_size",
+      "error_message",
+    )
+    
+  def get_clip_url(self, obj):
+    if obj.clip_file:
+      return obj.clip_url()
     return None

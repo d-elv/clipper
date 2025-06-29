@@ -28,28 +28,22 @@ export default function Home() {
     }
   }
 
-  console.log(status);
-
   async function pollVideoStatus(videoId: string) {
     try {
-      console.log("polling video status", videoId);
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_HOST}/api/videos/status/${videoId}/`,
+        `${process.env.NEXT_PUBLIC_API_HOST}/api/videos/status/video/${videoId}/`,
       );
 
       if (!response.ok) {
         throw new Error(`HTTP Error: ${response.status}`);
       }
 
-      console.log(response);
       const data: VideoStatus = await response.json();
-      console.log("data.status", data.status);
       setStatus(data.status);
 
       if (data.status === "completed" && data.proxy_url) {
         setProcessing(false);
         setProxyUrl(data.proxy_url);
-        console.log("Proxy url set");
       } else if (data.status === "failed") {
         setProcessing(false);
         setError(data.error || "Video processing failed");
@@ -57,7 +51,6 @@ export default function Home() {
         setTimeout(() => pollVideoStatus(videoId), 2000);
       }
     } catch (error) {
-      console.log("Error polling video status", error);
       setError("Failed to get video status");
       setProcessing(false);
     }
@@ -107,7 +100,6 @@ export default function Home() {
       );
       xmlHttpRequest.send(formData);
     } catch (error) {
-      console.log("Upload error:", error);
       setError("Upload failed");
       setUploading(false);
     }

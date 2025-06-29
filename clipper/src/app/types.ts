@@ -8,3 +8,10 @@ export interface VideoData {
   proxy_url: string;
   error_message: boolean;
 }
+
+export interface Clip {
+  inPoint: number;
+  outPoint: number;
+  duration: number;
+  name: string;
+}

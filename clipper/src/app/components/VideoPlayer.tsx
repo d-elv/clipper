@@ -182,7 +182,7 @@ export function VideoPlayer({
   }, [inPoint, outPoint]);
 
   return (
-    <div className="relative h-auto md:max-w-8/12">
+    <div className="relative w-full">
       {/* VIDEO PLAYER */}
       {videoData ? (
         <video

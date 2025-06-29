@@ -1,36 +1,25 @@
 "use client";
 
-import { formatSecondsToMinSec } from "@/util/formatters";
 import { useEffect, useState } from "react";
 import { ClipSidebar } from "@/app/components/ClipSidebar";
 import { useSearchParams } from "next/navigation";
 
 import apiService from "@/app/services/apiServices";
-import { VideoData } from "@/app/types";
+import { Clip, VideoData } from "@/app/types";
 import { VideoPlayer } from "@/app/components/VideoPlayer";
-
-interface Clip {
-  inPoint: number;
-  outPoint: number;
-  duration: number;
-  name: string;
-  filename: string;
-}
 
 export default function EditPage() {
   const searchParams = useSearchParams();
   const videoId = searchParams.get("id");
-
   const [videoData, setVideoData] = useState<VideoData | null>(null);
-
   const [inPoint, setInPoint] = useState<number | null>(null);
   const [outPoint, setOutPoint] = useState<number | null>(null);
   const [clips, setClips] = useState<Clip[]>([]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   async function getVideoInfo() {
-    const url = `/api/videos/status/`;
+    const url = `/api/videos/status/video/`;
     const tempVideoData = await apiService.get(url, videoId);
-    console.log(tempVideoData);
     setVideoData(tempVideoData);
   }
 
@@ -47,17 +36,31 @@ export default function EditPage() {
       inPoint,
       outPoint,
       duration: clipDuration,
-      name: `Clip ${String(clips.length + 1).padStart(3, "0")}`,
-      filename: videoData.original_filename,
+      name: `Clip_${String(clips.length + 1).padStart(3, "0")}`,
     };
     setClips((prevClips) => [...prevClips, newClip]);
     setInPoint(null);
     setOutPoint(null);
   }
 
+  useEffect(() => {
+    if (clips.length > 0) {
+      setIsSidebarOpen(true);
+    } else {
+      setIsSidebarOpen(false);
+    }
+  }, [clips]);
+
+  function deleteClip(name: string) {
+    const filteredClips = clips.filter((clip: Clip) => {
+      return clip.name !== name;
+    });
+    setClips(filteredClips);
+  }
+
   return (
-    <div>
-      <div className="flex flex-col items-center justify-center">
+    <div className="lg:grid lg:grid-cols-8">
+      <div className="lg:col-span-5 lg:ml-20">
         <h2 className="rounded-2xl px-8 py-4 text-center text-4xl font-bold text-white">
           {videoData?.original_filename
             ? String(videoData.original_filename).slice(
@@ -78,23 +81,14 @@ export default function EditPage() {
         )}
 
         {/* CLIPS SECTION - TO BE A SIDEBAR */}
-        <div className="m-4 grid grid-cols-5 gap-2">
-          {clips.map((clip) => {
-            return (
-              <div key={clip.name} className="rounded-lg bg-amber-500 p-4">
-                <h1 className="text-lg font-bold">{clip.name}</h1>
-                <p className="text-sm">
-                  <span className="font-bold">Length:</span>{" "}
-                  {formatSecondsToMinSec(clip.duration)}
-                </p>
-                <p className="text-sm">
-                  <span className="font-bold">Original Name:</span>{" "}
-                  {clip.filename}
-                </p>
-              </div>
-            );
-          })}
-        </div>
+      </div>
+      <div className="transition-all">
+        <ClipSidebar
+          isOpen={isSidebarOpen}
+          clips={clips}
+          deleteClip={deleteClip}
+          videoId={videoId}
+        />
       </div>
     </div>
   );
