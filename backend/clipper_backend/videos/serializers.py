@@ -1,4 +1,5 @@
 from rest_framework import serializers
+import os
 
 from .models import VideoFile, ClipFile
 
@@ -24,6 +25,8 @@ class VideoFileSerializer(serializers.ModelSerializer):
 
 
 class ClipFileSerializer(serializers.ModelSerializer):
+  clip_url = serializers.SerializerMethodField()
+  clip_filename = serializers.SerializerMethodField()
   class Meta:
     model = ClipFile
     fields = (
@@ -31,6 +34,7 @@ class ClipFileSerializer(serializers.ModelSerializer):
       "status",
       "clip_name",
       "clip_url",
+      "clip_filename",
       "duration",
       "file_size",
       "error_message",
@@ -39,4 +43,9 @@ class ClipFileSerializer(serializers.ModelSerializer):
   def get_clip_url(self, obj):
     if obj.clip_file:
       return obj.clip_url()
+    return None
+  
+  def get_clip_filename(self, obj):
+    if obj.clip_file:
+      return os.path.basename(obj.clip_file.name)
     return None

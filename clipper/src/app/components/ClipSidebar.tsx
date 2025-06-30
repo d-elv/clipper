@@ -5,7 +5,6 @@ import { Clip } from "../types";
 import { formatSecondsToMinSec } from "@/util/formatters";
 import { useEffect, useState } from "react";
 import apiService from "../services/apiServices";
-import { Database } from "lucide-react";
 
 // function ClipCard({
 //   children,
@@ -25,11 +24,19 @@ import { Database } from "lucide-react";
 // }
 
 interface ClipStatus {
-  clip_id: string;
-  status: string;
-  filename: string;
+  id: string;
+  clip_filename: string;
+  clip_name: string;
+  duration: number;
   clip_url: string;
-  error: string | null;
+  error_message: string | null;
+  file_size: number;
+  status: string;
+}
+
+interface DownloadData {
+  url: string;
+  name: string;
 }
 
 export function ClipSidebar({
@@ -47,6 +54,7 @@ export function ClipSidebar({
   const [clipIds, setClipIds] = useState<string[]>([]);
   const [statuses, setStatuses] = useState<string[]>([]);
   const [clipUrls, setClipUrls] = useState<string[]>([]);
+  const [downloadData, setDownloadData] = useState<DownloadData[]>([]);
   const [clipErrors, setClipErrors] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>();
 
@@ -76,12 +84,11 @@ export function ClipSidebar({
 
     async function pollAllClips() {
       const newStatuses: string[] = [];
-      const newUrls: string[] = [];
+      const newDownloadData: DownloadData[] = [];
       const newErrors: string[] = [];
 
       await Promise.all(
         clipIds.map(async (clipId) => {
-          console.log("polling clipID", clipId);
           try {
             const response = await fetch(
               `${process.env.NEXT_PUBLIC_API_HOST}/api/videos/status/clip/${clipId}`,
@@ -90,10 +97,13 @@ export function ClipSidebar({
             const data: ClipStatus = await response.json();
             newStatuses.push(data.status);
             if (data.status === "completed" && data.clip_url) {
-              newUrls.push(data.clip_url);
+              newDownloadData.push({
+                url: data.clip_url,
+                name: data.clip_filename,
+              });
             }
             if (data.status === "failed") {
-              newErrors.push(data.error || "Clip processing failed");
+              newErrors.push(data.error_message || "Clip processing failed");
             }
           } catch (error) {
             newErrors.push("Failed to get clip status");
@@ -103,7 +113,7 @@ export function ClipSidebar({
 
       if (!cancelled) {
         setStatuses(newStatuses);
-        setClipUrls(newUrls);
+        setDownloadData(newDownloadData);
         setClipErrors(newErrors);
 
         if (
@@ -126,6 +136,20 @@ export function ClipSidebar({
       cancelled = true;
     };
   }, [processing, clipIds]);
+
+  useEffect(() => {
+    if (!processing && downloadData.length > 0) {
+      downloadData.forEach((data) => {
+        const link = document.createElement("a");
+        link.href = data.url;
+        link.setAttribute("download", data.name);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      });
+      setDownloadData([]);
+    }
+  }, [processing, downloadData]);
 
   return (
     <>
