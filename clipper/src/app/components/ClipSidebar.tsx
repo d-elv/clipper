@@ -187,9 +187,9 @@ export function ClipSidebar({
   return (
     <>
       {isOpen ? (
-        <div className="flex h-full bg-gray-500 lg:absolute lg:right-0 lg:w-[30%]">
+        <div className="flex h-full bg-gray-500 lg:absolute lg:right-0 lg:w-80">
           <Separator orientation="vertical" />
-          <div className="mt-3">
+          <div className="mt-3 w-full">
             <div className="flex justify-around">
               <h2 className="text-2xl text-white lg:m-3">Clips</h2>
               <button
@@ -200,7 +200,7 @@ export function ClipSidebar({
                 Download Clips
               </button>
             </div>
-            <ul className="grid grid-cols-2 gap-2 overflow-y-auto lg:m-3">
+            <ul className="m-4 grid grid-cols-2 gap-4 overflow-y-auto">
               {clips.map((clipData, index) => (
                 <ClipCard
                   clipData={clipData}

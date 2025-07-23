@@ -90,14 +90,13 @@ export default function EditPage() {
 
         {/* CLIPS SECTION - TO BE A SIDEBAR */}
       </div>
-      <div className="transition-all">
-        <ClipSidebar
-          isOpen={isSidebarOpen}
-          clips={clips}
-          deleteClip={deleteClip}
-          videoId={videoId}
-        />
-      </div>
+
+      <ClipSidebar
+        isOpen={isSidebarOpen}
+        clips={clips}
+        deleteClip={deleteClip}
+        videoId={videoId}
+      />
     </div>
   );
 }
