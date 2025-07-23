@@ -106,8 +106,10 @@ def create_clip(video_id, clip_id):
     clip.save()
     
     input_path = video.original_file.path
+    
+    original_filename, ext = os.path.splitext(video.original_filename)
 
-    clip_filename = f"{video.original_filename}_{clip.clip_name}.mp4"
+    clip_filename = f"{original_filename}_{clip.clip_name}{ext}"
     clip_path = os.path.join(settings.MEDIA_ROOT, "clips", clip_filename)
     
     os.makedirs(os.path.dirname(clip_path), exist_ok=True)
