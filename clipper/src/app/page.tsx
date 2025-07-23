@@ -183,10 +183,10 @@ export default function Home() {
               )}
             </div>
           )}
-          {proxyUrl && (
+          {proxyUrl && dataVideo && (
             <Link
               href={{
-                pathname: `/clip/${videoId}`,
+                pathname: `/clip/${dataVideo.name}`,
                 query: { id: videoId },
               }}
               className="ffmpeg-green-300 border-ffmpeg-green-800 rounded-2xl border p-4 text-center text-lg text-white"

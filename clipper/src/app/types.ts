@@ -14,4 +14,5 @@ export interface Clip {
   outPoint: number;
   duration: number;
   name: string;
+  thumbnail: string;
 }

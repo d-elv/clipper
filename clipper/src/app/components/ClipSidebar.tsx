@@ -5,6 +5,7 @@ import { Clip } from "../types";
 import { formatSecondsToMinSec } from "@/util/formatters";
 import { useEffect, useState } from "react";
 import apiService from "../services/apiServices";
+import Image from "next/image";
 
 interface ClipStatus {
   id: string;
@@ -20,6 +21,36 @@ interface ClipStatus {
 interface DownloadData {
   download_url: string;
   name: string;
+}
+
+function ClipCard({
+  deleteClip,
+  clipData,
+}: {
+  deleteClip: (name: string) => void;
+  clipData: Clip;
+}) {
+  return (
+    <li className="relative rounded-lg bg-amber-500">
+      <button
+        className="absolute top-2 right-2 cursor-pointer rounded-full px-2 py-1 transition-colors duration-300 hover:bg-amber-600"
+        onClick={() => deleteClip(clipData.name)}
+      >
+        X
+      </button>
+      <h1 className="text-lg font-bold">{clipData.name}</h1>
+      <p className="text-sm">
+        <span className="font-bold">Length:</span>{" "}
+        {formatSecondsToMinSec(clipData.duration)}
+      </p>
+      <Image
+        src={clipData.thumbnail}
+        alt="Clip thumbnail"
+        width={100}
+        height={100}
+      />
+    </li>
+  );
 }
 
 export function ClipSidebar({
@@ -170,28 +201,13 @@ export function ClipSidebar({
               </button>
             </div>
             <ul className="grid grid-cols-2 gap-2 overflow-y-auto lg:m-3">
-              {clips.map((clip) => {
-                return (
-                  <li
-                    key={clip.name}
-                    className="relative rounded-lg bg-amber-500 p-4"
-                  >
-                    <button
-                      className="absolute top-2 right-2 cursor-pointer rounded-full px-2 py-1 transition-colors duration-300 hover:bg-amber-600"
-                      onClick={() => deleteClip(clip.name)}
-                    >
-                      X
-                    </button>
-                    {/* <ClipCard deleteClip={deleteClip}> */}
-                    <h1 className="text-lg font-bold">{clip.name}</h1>
-                    <p className="text-sm">
-                      <span className="font-bold">Length:</span>{" "}
-                      {formatSecondsToMinSec(clip.duration)}
-                    </p>
-                    {/* </ClipCard> */}
-                  </li>
-                );
-              })}
+              {clips.map((clipData, index) => (
+                <ClipCard
+                  clipData={clipData}
+                  deleteClip={deleteClip}
+                  key={`${clipData.name}-${index}`}
+                />
+              ))}
             </ul>
           </div>
           {errorMessage && (

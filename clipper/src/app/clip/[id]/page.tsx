@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import apiService from "@/app/services/apiServices";
 import { Clip, VideoData } from "@/app/types";
 import { VideoPlayer } from "@/app/components/VideoPlayer";
+import { createThumbnail } from "@/util/createThumbnail";
 
 export default function EditPage() {
   const searchParams = useSearchParams();
@@ -27,8 +28,14 @@ export default function EditPage() {
     getVideoInfo();
   }, []);
 
-  function createClipFromSelection() {
+  async function createClipFromSelection() {
     if (!inPoint || !outPoint || !videoData) return;
+
+    const response = await fetch(videoData.proxy_url);
+    const blob = await response.blob();
+
+    const file = new File([blob], videoData.original_filename);
+    const thumbnail = await createThumbnail(file, inPoint);
 
     const clipDuration = outPoint - inPoint;
 
@@ -37,6 +44,7 @@ export default function EditPage() {
       outPoint,
       duration: clipDuration,
       name: `Clip_${String(clips.length + 1).padStart(3, "0")}`,
+      thumbnail: thumbnail,
     };
     setClips((prevClips) => [...prevClips, newClip]);
     setInPoint(null);
