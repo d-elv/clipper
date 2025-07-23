@@ -28,7 +28,7 @@ services:
   # Regular celery worker processes videos
   celery:
     build: ./clipper_backend
-    command: celery -A clipper_backend worker --l info
+    command: celery -A clipper_backend worker -l info
     volumes:
       - ./clipper_backend/:/usr/src/clipper_backend/
     env_file:
