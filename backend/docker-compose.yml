@@ -26,21 +26,9 @@ services:
       - "6379:6379"
 
   # Regular celery worker processes videos
-  celery-worker:
+  celery:
     build: ./clipper_backend
-    command: celery -A clipper_backend worker --loglevel=info --concurrency=4
-    volumes:
-      - ./clipper_backend/:/usr/src/clipper_backend/
-    env_file:
-      - ./.env.dev
-    depends_on:
-      - db
-      - redis
-
-  # Celery Beat runs maintenance tasks such as deleting old files
-  celery-beat:
-    build: ./clipper_backend
-    command: celery -A clipper_backend beat --loglevel=info
+    command: celery -A clipper_backend worker --l info
     volumes:
       - ./clipper_backend/:/usr/src/clipper_backend/
     env_file:

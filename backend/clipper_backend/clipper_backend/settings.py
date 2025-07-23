@@ -151,10 +151,3 @@ CELERY_RESULT_BACKEND= os.environ.get("CELERY_RESULT_BACKEND")
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
-CELERY_TIMEZONE = "UTC"
-
-CELERY_TASK_ROUTES = {
-    "videos.tasks.cleanup_old_files": {"queue": "cleanup"},
-    "videos.tasks.create_proxy": {"queue": "video_processing"},
-    "videos.tasks.create_clip": {"queue": "video_processing"},
-}
