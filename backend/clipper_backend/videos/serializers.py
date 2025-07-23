@@ -1,5 +1,6 @@
 from rest_framework import serializers
 import os
+from django.conf import settings
 
 from .models import VideoFile, ClipFile
 
@@ -27,6 +28,7 @@ class VideoFileSerializer(serializers.ModelSerializer):
 class ClipFileSerializer(serializers.ModelSerializer):
   clip_url = serializers.SerializerMethodField()
   clip_filename = serializers.SerializerMethodField()
+  download_url = serializers.SerializerMethodField()
   class Meta:
     model = ClipFile
     fields = (
@@ -35,6 +37,7 @@ class ClipFileSerializer(serializers.ModelSerializer):
       "clip_name",
       "clip_url",
       "clip_filename",
+      "download_url",
       "duration",
       "file_size",
       "error_message",
@@ -48,4 +51,9 @@ class ClipFileSerializer(serializers.ModelSerializer):
   def get_clip_filename(self, obj):
     if obj.clip_file:
       return os.path.basename(obj.clip_file.name)
+    return None
+  
+  def get_download_url(self, obj):
+    if obj.clip_file and obj.status == "completed":
+      return f"{settings.WEBSITE_URL}/api/clips/download/{obj.id}"
     return None

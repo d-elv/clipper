@@ -1,4 +1,6 @@
 from celery import shared_task
+from django.utils import timezone
+from datetime import timedelta
 from .models import VideoFile, ClipFile
 import json
 import subprocess 
@@ -165,3 +167,56 @@ def create_clip(video_id, clip_id):
     except:
       pass
     print(f"Error processing clip {clip_id}: {str(error)}")
+
+@shared_task
+def cleanup_old_files(hours = 1):
+  cutoff_time = timezone.now() - timedelta(hours=hours)
+  
+  files_deleted = 0
+  db_videos_deleted = 0
+  db_clips_deleted = 0
+  
+  try:
+    old_videos = VideoFile.objects.filter(created_at__lt=cutoff_time)
+    
+    for video in old_videos:
+      try:
+        if video.original_file and os.path.exists(video.original_file.path):
+          os.remove(video.original_file.path)
+          files_deleted += 1
+        if video.proxy_file and os.path.exists(video.proxy_file.path):
+          os.remove(video.proxy_file.path)
+          files_deleted += 1
+        
+        video.delete()
+        db_videos_deleted += 1
+      except Exception as error:
+        print(f"Error deleting video {video.id}: {str(error)}")
+    
+    
+    old_clips = ClipFile.objects.filter(created_at__lt=cutoff_time)
+      
+    for clip in old_clips:  
+      try:
+        if clip.clip_file and os.path.exists(clip.clip_file.path):
+          os.remove(clip.clip_file.path)
+          files_deleted += 1
+        
+        clip.delete()
+        db_clips_deleted += 1
+        
+      except Exception as error:
+        print(f"Error deleting clip {clip.id}: {str(error)}")
+    
+    print(f"Routine cleanup complete: {files_deleted} total files deleted. {db_videos_deleted} videos and {db_clips_deleted} clips removed from database.")
+    return {
+      "videos_deleted": db_videos_deleted,
+      "clips_deleted": db_clips_deleted,
+      "files_deleted": files_deleted
+    }
+    
+    
+  except Exception as error:
+    print(f"Error during cleanup: ${str(error)}")
+    return {"error": str(error)}
+  

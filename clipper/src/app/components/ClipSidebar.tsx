@@ -6,23 +6,6 @@ import { formatSecondsToMinSec } from "@/util/formatters";
 import { useEffect, useState } from "react";
 import apiService from "../services/apiServices";
 
-// function ClipCard({
-//   children,
-//   deleteClip,
-// }: {
-//   children: React.ReactNode;
-//   deleteClip: () => void;
-// }) {
-//   return (
-//     <div className="relative rounded-lg bg-amber-500 p-4">
-//       <div className="absolute top-2 right-4" onClick={deleteClip}>
-//         X
-//       </div>
-//       {children}
-//     </div>
-//   );
-// }
-
 interface ClipStatus {
   id: string;
   clip_filename: string;
@@ -35,7 +18,7 @@ interface ClipStatus {
 }
 
 interface DownloadData {
-  url: string;
+  download_url: string;
   name: string;
 }
 
@@ -53,16 +36,15 @@ export function ClipSidebar({
   const [processing, setProcessing] = useState(false);
   const [clipIds, setClipIds] = useState<string[]>([]);
   const [statuses, setStatuses] = useState<string[]>([]);
-  const [clipUrls, setClipUrls] = useState<string[]>([]);
   const [downloadData, setDownloadData] = useState<DownloadData[]>([]);
   const [clipErrors, setClipErrors] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>();
 
-  async function handleSendClipsData() {
+  async function handlePostClipsData() {
     if (clips.length === 0 || !videoId) return;
 
     const response = await apiService.post_clips(
-      "/api/videos/clips/",
+      "/api/videos/clips/create/",
       clips,
       videoId,
     );
@@ -91,14 +73,14 @@ export function ClipSidebar({
         clipIds.map(async (clipId) => {
           try {
             const response = await fetch(
-              `${process.env.NEXT_PUBLIC_API_HOST}/api/videos/status/clip/${clipId}`,
+              `${process.env.NEXT_PUBLIC_API_HOST}/api/videos/clips/status/${clipId}`,
             );
 
             const data: ClipStatus = await response.json();
             newStatuses.push(data.status);
             if (data.status === "completed" && data.clip_url) {
               newDownloadData.push({
-                url: data.clip_url,
+                download_url: data.clip_url,
                 name: data.clip_filename,
               });
             }
@@ -137,15 +119,35 @@ export function ClipSidebar({
     };
   }, [processing, clipIds]);
 
+  async function downloadFile(downloadUrl: string, filename: string) {
+    try {
+      const response = await fetch(downloadUrl);
+
+      if (!response.ok) {
+        throw new Error(`Download failed: ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+
+      const link = document.createElement("a");
+      link.href = window.URL.createObjectURL(blob);
+      link.download = filename;
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      window.URL.revokeObjectURL(link.href);
+    } catch (error) {
+      console.error("Download failed:", error);
+    }
+  }
   useEffect(() => {
     if (!processing && downloadData.length > 0) {
-      downloadData.forEach((data) => {
-        const link = document.createElement("a");
-        link.href = data.url;
-        link.setAttribute("download", data.name);
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
+      downloadData.forEach((data, index) => {
+        setTimeout(() => {
+          downloadFile(data.download_url, data.name);
+        }, index * 300);
       });
       setDownloadData([]);
     }
@@ -160,7 +162,7 @@ export function ClipSidebar({
             <div className="flex justify-around">
               <h2 className="text-2xl text-white lg:m-3">Clips</h2>
               <button
-                onClick={handleSendClipsData}
+                onClick={handlePostClipsData}
                 disabled={processing}
                 className="cursor-pointer rounded-2xl bg-gray-800 px-4 py-2 text-lg text-white transition-colors duration-300 hover:bg-gray-700 disabled:cursor-auto disabled:bg-gray-600"
               >

@@ -4,7 +4,6 @@ services:
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - ./clipper_backend/:/usr/src/clipper_backend/
-      - media_files:/usr/src/clipper_backend/media_files/
     ports:
       - 8000:8000
     env_file:
@@ -26,12 +25,24 @@ services:
     ports:
       - "6379:6379"
 
-  celery:
+  # Regular celery worker processes videos
+  celery-worker:
     build: ./clipper_backend
-    command: celery -A clipper_backend worker -l info
+    command: celery -A clipper_backend worker --loglevel=info --concurrency=4
     volumes:
       - ./clipper_backend/:/usr/src/clipper_backend/
-      - media_files:/usr/src/clipper_backend/media_files/
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - db
+      - redis
+
+  # Celery Beat runs maintenance tasks such as deleting old files
+  celery-beat:
+    build: ./clipper_backend
+    command: celery -A clipper_backend beat --loglevel=info
+    volumes:
+      - ./clipper_backend/:/usr/src/clipper_backend/
     env_file:
       - ./.env.dev
     depends_on:
