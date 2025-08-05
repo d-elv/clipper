@@ -107,7 +107,8 @@ export default function Home() {
 
   function getStatusMessage() {
     if (uploading) return "Uploading video...";
-    if (status === "processing") return "Creating proxy video...";
+    if (status === "processing")
+      return "Creating proxy video for smooth playback...";
     if (status === "completed")
       return "Processing complete! Redirecting to edit page...";
     if (status === "failed") return "Failed to create proxy...";
@@ -172,7 +173,7 @@ export default function Home() {
               {processing && (
                 <p className="text-center text-xs text-gray-600">
                   This may take a few minutes depending on video size and
-                  internet connection...
+                  length...
                 </p>
               )}
 

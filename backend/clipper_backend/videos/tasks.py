@@ -38,6 +38,9 @@ def create_proxy(video_id):
         video.width = video_stream.get("width")
         video.height = video_stream.get("height")
         video.duration = video_stream.get("duration")
+        raw_framerate = video_stream.get("r_frame_rate")
+        trimmed_framerate = raw_framerate.split("/")[0]
+        video.framerate = trimmed_framerate if trimmed_framerate else "30"
         video.save()
     except Exception as error:
       raise Exception(f"Failed to extract metadata from {input_path}, {str(error)}")
@@ -53,8 +56,11 @@ def create_proxy(video_id):
       cmd = [
         "ffmpeg",
         "-i", input_path,
+        "-g", "4",
         "-vf", "scale=-2:640",
         "-c:v", "libx264",
+        "-pix_fmt", "yuv420p",
+        "-profile:v", "main",
         "-crf", "23",
         "-preset", "medium",
         "-c:a", "aac",

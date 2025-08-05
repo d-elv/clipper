@@ -187,8 +187,7 @@ export function ClipSidebar({
   return (
     <>
       {isOpen ? (
-        <div className="flex h-full bg-gray-500 lg:absolute lg:right-0 lg:w-80">
-          <Separator orientation="vertical" />
+        <>
           <div className="mt-3 w-full">
             <div className="flex justify-around">
               <h2 className="text-2xl text-white lg:m-3">Clips</h2>
@@ -215,7 +214,7 @@ export function ClipSidebar({
               {errorMessage}
             </p>
           )}
-        </div>
+        </>
       ) : (
         ""
       )}

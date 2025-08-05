@@ -8,6 +8,7 @@ import apiService from "@/app/services/apiServices";
 import { Clip, VideoData } from "@/app/types";
 import { VideoPlayer } from "@/app/components/VideoPlayer";
 import { createThumbnail } from "@/util/createThumbnail";
+import { Separator } from "@/components/ui/separator";
 
 export default function EditPage() {
   const searchParams = useSearchParams();
@@ -67,9 +68,9 @@ export default function EditPage() {
   }
 
   return (
-    <div className="lg:grid lg:grid-cols-8">
-      <div className="lg:col-span-5 lg:ml-20">
-        <h2 className="rounded-2xl px-8 py-4 text-center text-4xl font-bold text-white">
+    <div className="flex flex-col justify-center gap-8 lg:flex-row">
+      <div className="mx-4 lg:mx-0 lg:ml-8">
+        <h2 className="truncate rounded-2xl px-8 py-4 text-center text-4xl font-bold text-white">
           {videoData?.original_filename
             ? String(videoData.original_filename).slice(
                 0,
@@ -87,16 +88,19 @@ export default function EditPage() {
             onClip={createClipFromSelection}
           />
         )}
-
-        {/* CLIPS SECTION - TO BE A SIDEBAR */}
       </div>
 
-      <ClipSidebar
-        isOpen={isSidebarOpen}
-        clips={clips}
-        deleteClip={deleteClip}
-        videoId={videoId}
-      />
+      {clips.length > 0 && (
+        <div className="flex bg-gray-500 lg:h-screen">
+          <Separator orientation="vertical" />
+          <ClipSidebar
+            isOpen={isSidebarOpen}
+            clips={clips}
+            deleteClip={deleteClip}
+            videoId={videoId}
+          />
+        </div>
+      )}
     </div>
   );
 }

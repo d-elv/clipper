@@ -15,6 +15,10 @@ interface VideoPlayerProps {
   onClip: () => void;
 }
 
+function calculatePercent(currentTime: number, duration: number): number {
+  return (currentTime / duration) * 100;
+}
+
 export function VideoPlayer({
   videoData,
   inPoint,
@@ -35,8 +39,7 @@ export function VideoPlayer({
     function updateProgress() {
       const video = videoRef.current;
       if (video && video.duration) {
-        const percent = (video.currentTime / video.duration) * 100;
-        setProgressPercent(percent);
+        setProgressPercent(calculatePercent(video.currentTime, video.duration));
         if (!video.paused && !video.ended) {
           rafRef.current = requestAnimationFrame(updateProgress);
         }
@@ -64,30 +67,44 @@ export function VideoPlayer({
     const container = progressContainerRef.current;
     const rect = container.getBoundingClientRect();
 
-    function updateProgress(pageX: number) {
-      const x = Math.min(Math.max(pageX - rect.left, 0), rect.width);
+    function updateProgress(clientX: number) {
+      const x = Math.min(Math.max(clientX - rect.left, 0), rect.width);
       const percentage = (x / rect.width) * 100;
-      setProgressPercent(percentage);
+      setProgressPercent(calculatePercent(x, rect.width));
 
+      // Updates video's currentTime based on click
       if (videoRef.current && videoRef.current.duration) {
+        console.log(
+          "ClientX:",
+          clientX,
+          "rect.left:",
+          rect.left,
+          "rect.width:",
+          rect.width,
+          "x:",
+          x,
+          "video duration:",
+          videoRef.current.duration,
+          "new current time calculation:",
+          (percentage / 100) * videoRef.current.duration,
+        );
         videoRef.current.currentTime =
           (percentage / 100) * videoRef.current.duration;
       }
     }
 
-    updateProgress(event.pageX);
+    updateProgress(event.clientX);
 
     function onMouseMove(mouseMoveEvent: MouseEvent) {
-      updateProgress(mouseMoveEvent.pageX);
+      updateProgress(mouseMoveEvent.clientX);
     }
     function onMouseUp(mouseMoveEvent: MouseEvent) {
-      updateProgress(mouseMoveEvent.pageX);
       document.removeEventListener("mousemove", onMouseMove);
       document.removeEventListener("mouseup", onMouseUp);
     }
 
     document.addEventListener("mousemove", onMouseMove);
-    document.body.addEventListener("mouseup", onMouseUp, { once: true });
+    document.addEventListener("mouseup", onMouseUp, { once: true });
   }
 
   function handlePlayPause() {
@@ -110,7 +127,7 @@ export function VideoPlayer({
 
   function handleSetOutPoint() {
     if (videoRef.current) {
-      setOutPoint(videoRef.current.currentTime + 1 / 60);
+      setOutPoint(videoRef.current.currentTime + 1 / videoData.framerate);
     }
   }
 
@@ -120,9 +137,7 @@ export function VideoPlayer({
     if (!video) return;
 
     const handleTimeUpdate = () => {
-      if (video.duration) {
-        setProgressPercent((video.currentTime / video.duration) * 100);
-      }
+      setProgressPercent((video.currentTime / video.duration) * 100);
     };
 
     video.addEventListener("timeupdate", handleTimeUpdate);
@@ -131,6 +146,31 @@ export function VideoPlayer({
       video.removeEventListener("timeupdate", handleTimeUpdate);
     };
   }, []);
+
+  useEffect(() => {
+    if (!videoRef.current) return;
+    const video = videoRef.current;
+
+    video.addEventListener("loadedmetadata", () => {
+      if (video.duration) {
+        console.log("Video metadata has loaded", video.duration);
+        setProgressPercent(0);
+      }
+    });
+    return () => {
+      return video.removeEventListener("loadedmetadata", () => {});
+    };
+  }, [videoData]);
+
+  function setCurrentTimeToThis() {
+    if (!videoRef.current) return;
+    videoRef.current.currentTime = 103.596;
+    console.log(
+      "time set to 103.596",
+      videoRef.current.currentTime,
+      videoRef.current.duration,
+    );
+  }
 
   // Handles keyboard inputs: ArrowLeft, ArrowRight, KeyI, KeyO
   useEffect(() => {
@@ -141,12 +181,12 @@ export function VideoPlayer({
           handlePlayPause();
         }
         if (event.code === "ArrowLeft") {
-          // TODO: Replace 60 with framerate dynamically
-          videoRef.current.currentTime = videoRef.current.currentTime - 1 / 60;
+          videoRef.current.currentTime =
+            videoRef.current.currentTime - 1 / videoData.framerate;
         }
         if (event.code === "ArrowRight") {
-          // TODO: Replace 60 with framerate dynamically
-          videoRef.current.currentTime = videoRef.current.currentTime + 1 / 60;
+          videoRef.current.currentTime =
+            videoRef.current.currentTime + 1 / videoData.framerate;
         }
         if (event.code === "KeyI") {
           handleSetInPoint();
@@ -155,6 +195,10 @@ export function VideoPlayer({
         if (event.code === "KeyO") {
           handleSetOutPoint();
           setLastKeyStroke("O");
+        }
+        if (event.code === "KeyC") {
+          // create clip from selection
+          setLastKeyStroke("C");
         }
       }
     };
@@ -217,6 +261,7 @@ export function VideoPlayer({
             />
           )}
 
+          {/* PROGRESS BAR */}
           <div
             onMouseDown={progressWidthHandler}
             ref={progressContainerRef}
@@ -286,6 +331,12 @@ export function VideoPlayer({
           <div className="ml-auto flex gap-2">
             <button
               className="m-0 rounded-md border bg-gray-400 px-1 py-1 text-sm transition-colors hover:cursor-pointer hover:bg-gray-500 md:px-3 md:py-2 md:text-lg"
+              onClick={setCurrentTimeToThis}
+            >
+              Fix Time
+            </button>
+            <button
+              className="m-0 rounded-md border bg-gray-400 px-1 py-1 text-sm transition-colors hover:cursor-pointer hover:bg-gray-500 md:px-3 md:py-2 md:text-lg"
               onClick={handleSetInPoint}
             >
               I
@@ -306,17 +357,24 @@ export function VideoPlayer({
           <div className="mr-2 ml-auto flex gap-2 text-center">
             <p className="m-0 rounded-md bg-gray-400 px-2 py-1 text-sm lg:px-4 lg:py-2 lg:text-base">
               In:{" "}
-              {inPoint ? formatSecondsToTimecode(inPoint, 60) : "00:00:00:00"}
+              {inPoint
+                ? formatSecondsToTimecode(inPoint, videoData.framerate)
+                : "00:00:00:00"}
             </p>
             <p className="m-0 rounded-md bg-gray-400 px-2 py-1 text-sm lg:px-4 lg:py-2 lg:text-base">
               Out:{" "}
-              {outPoint ? formatSecondsToTimecode(outPoint, 60) : "00:00:00:00"}
+              {outPoint
+                ? formatSecondsToTimecode(outPoint, videoData.framerate)
+                : "00:00:00:00"}
             </p>
             <p className="m-0 rounded-md bg-gray-400 px-2 py-1 text-sm lg:px-4 lg:py-2 lg:text-base">
               Selection:{" "}
               {/* TODO: This calculation becomes incorrect with larger selections */}
               {inPoint && outPoint
-                ? formatSecondsToTimecode(outPoint - inPoint + 1 / 60, 60)
+                ? formatSecondsToTimecode(
+                    outPoint - inPoint + 1 / videoData.framerate,
+                    videoData.framerate,
+                  )
                 : "HH:MM:SS:FF"}
             </p>
           </div>

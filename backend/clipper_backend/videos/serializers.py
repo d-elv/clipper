@@ -14,6 +14,7 @@ class VideoFileSerializer(serializers.ModelSerializer):
       "original_filename",
       "width",
       "height",
+      "framerate",
       "duration",
       "proxy_url",
       "error_message",
