@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 import uuid
+import os
 
 class VideoFile(models.Model):
   STATUS_CHOICES = (
@@ -23,7 +24,9 @@ class VideoFile(models.Model):
   error_message = models.TextField(null=True, blank=True)
   
   def proxy_url(self):
-    return f"{settings.WEBSITE_URL}{self.proxy_file.url}"
+    if self.proxy_file:
+      return f"{settings.NGINX_MEDIA_URL}proxies/{os.path.basename(self.proxy_file.name)}"
+    return None
   
 class ClipFile(models.Model):
   STATUS_CHOICES = (
@@ -44,4 +47,6 @@ class ClipFile(models.Model):
   error_message = models.TextField(null=True, blank=True)
   
   def clip_url(self):
-    return f"{settings.WEBSITE_URL}{self.clip_file.url}"
+    if self.clip_file:
+      return f"{settings.NGINX_MEDIA_URL}clips/{os.path.basename(self.clip_file.name)}"
+    return None

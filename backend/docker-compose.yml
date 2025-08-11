@@ -37,6 +37,13 @@ services:
       - db
       - redis
 
+  nginx:
+    image: nginx:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./clipper_backend/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./clipper_backend/media/:/media/
 volumes:
   postgres_data:
   media_files:
