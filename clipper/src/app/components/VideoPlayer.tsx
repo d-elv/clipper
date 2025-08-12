@@ -74,20 +74,6 @@ export function VideoPlayer({
 
       // Updates video's currentTime based on click
       if (videoRef.current && videoRef.current.duration) {
-        console.log(
-          "ClientX:",
-          clientX,
-          "rect.left:",
-          rect.left,
-          "rect.width:",
-          rect.width,
-          "x:",
-          x,
-          "video duration:",
-          videoRef.current.duration,
-          "new current time calculation:",
-          (percentage / 100) * videoRef.current.duration,
-        );
         videoRef.current.currentTime =
           (percentage / 100) * videoRef.current.duration;
       }
@@ -147,13 +133,13 @@ export function VideoPlayer({
     };
   }, []);
 
+  // Ensures the video metadata is loaded before setting currentTime
   useEffect(() => {
     if (!videoRef.current) return;
     const video = videoRef.current;
 
     video.addEventListener("loadedmetadata", () => {
       if (video.duration) {
-        console.log("Video metadata has loaded", video.duration);
         setProgressPercent(0);
       }
     });
@@ -161,16 +147,6 @@ export function VideoPlayer({
       return video.removeEventListener("loadedmetadata", () => {});
     };
   }, [videoData]);
-
-  function setCurrentTimeToThis() {
-    if (!videoRef.current) return;
-    videoRef.current.currentTime = 103.596;
-    console.log(
-      "time set to 103.596",
-      videoRef.current.currentTime,
-      videoRef.current.duration,
-    );
-  }
 
   // Handles keyboard inputs: ArrowLeft, ArrowRight, KeyI, KeyO
   useEffect(() => {
@@ -226,11 +202,11 @@ export function VideoPlayer({
   }, [inPoint, outPoint]);
 
   return (
-    <div className="relative w-full">
+    <div className="">
       {/* VIDEO PLAYER */}
       {videoData ? (
         <video
-          className="h-auto max-w-full rounded-tl-sm rounded-tr-sm"
+          className="rounded-tl-sm rounded-tr-sm object-contain md:max-h-[calc(100vh-10rem)]"
           ref={videoRef}
         >
           <source src={videoData.proxy_url} type="video/mp4"></source>
@@ -240,7 +216,7 @@ export function VideoPlayer({
       )}
 
       {/* VIDEO CONTROLS */}
-      <div className="flex h-28 flex-col rounded-br-sm rounded-bl-sm bg-gray-200">
+      <div className="flex h-20 flex-col gap-2 rounded-br-sm rounded-bl-sm bg-gray-200 p-2">
         <div
           className="flex h-full w-full items-center justify-around"
           id="progress-bar-container"
@@ -265,8 +241,8 @@ export function VideoPlayer({
           <div
             onMouseDown={progressWidthHandler}
             ref={progressContainerRef}
-            className="relative h-12 rounded-md bg-gray-400"
-            style={{ width: "calc(100% - 6rem)" }}
+            className="relative h-6 rounded-md bg-gray-400"
+            style={{ width: "calc(80%)" }}
             id="progress-bar-background"
           >
             {/* IN MARKER */}
@@ -274,14 +250,14 @@ export function VideoPlayer({
             videoRef.current &&
             videoRef.current.duration ? (
               <div
-                className="absolute h-12 w-0.5"
+                className="absolute h-6 w-0.5"
                 style={{
                   left: `${(inPoint / videoRef.current.duration) * 100}%`,
                   transform: "translateX(-50%)",
                 }}
               >
                 <div className="flex w-4">
-                  <div className="h-12 w-0.5 bg-red-600"></div>
+                  <div className="h-6 w-0.5 bg-red-600"></div>
                   <div className="h-2 w-2 rounded-br-full bg-red-600"></div>
                 </div>
               </div>
@@ -291,7 +267,7 @@ export function VideoPlayer({
             videoRef.current &&
             videoRef.current.duration ? (
               <div
-                className="absolute h-12 w-0.5"
+                className="absolute h-6 w-0.5"
                 style={{
                   left: `${(outPoint / videoRef.current.duration) * 100}%`,
                   transform: "translateX(-50%)",
@@ -299,14 +275,14 @@ export function VideoPlayer({
               >
                 <div className="-ml-2 flex w-4">
                   <div className="h-2 w-2 rounded-bl-full bg-red-600"></div>
-                  <div className="h-12 w-0.5 bg-red-600"></div>
+                  <div className="h-6 w-0.5 bg-red-600"></div>
                 </div>
               </div>
             ) : null}
             {/* SELECTED AREA MARK */}
             {inPoint && outPoint && videoRef.current ? (
               <div
-                className="bg-ffmpeg-green-200 absolute top-1 h-[80%] rounded-md opacity-70"
+                className="bg-ffmpeg-green-200 absolute top-0.5 h-[80%] rounded-md opacity-70"
                 style={{
                   left: `${(inPoint / videoRef.current.duration) * 100}%`,
                   width: `${((outPoint - inPoint) / videoRef.current.duration) * 100}%`,
@@ -315,59 +291,58 @@ export function VideoPlayer({
             ) : null}
             <div
               style={{ width: `${progressPercent}%` }}
-              className={`h-12 rounded-md bg-gray-700 hover:cursor-pointer`}
+              className={`h-6 rounded-md bg-gray-700`}
               id="progress-bar-actual"
             ></div>
           </div>
-          <p className="mr-1 text-xs text-gray-700">
+          {/* CURRENT TIME / DURATION */}
+          <p className="mr-1 text-xs text-gray-700 select-none">
             {videoRef.current
               ? formatSecondsToMinSec(videoRef.current.currentTime)
+              : "00:00"}{" "}
+            /{" "}
+            {videoRef.current
+              ? formatSecondsToMinSec(videoRef.current.duration)
               : "00:00"}
           </p>
         </div>
         {/* LOWER CONTROL BAR */}
-        <div className="mb-2 flex items-center justify-center gap-2 md:gap-4">
+        <div className="flex items-center justify-center gap-2 md:gap-4">
           <div className="invisible mr-auto"></div>
           <div className="ml-auto flex gap-2">
             <button
-              className="m-0 rounded-md border bg-gray-400 px-1 py-1 text-sm transition-colors hover:cursor-pointer hover:bg-gray-500 md:px-3 md:py-2 md:text-lg"
-              onClick={setCurrentTimeToThis}
-            >
-              Fix Time
-            </button>
-            <button
-              className="m-0 rounded-md border bg-gray-400 px-1 py-1 text-sm transition-colors hover:cursor-pointer hover:bg-gray-500 md:px-3 md:py-2 md:text-lg"
+              className="m-0 rounded-md border bg-gray-400 px-1 py-1 text-sm transition-colors hover:cursor-pointer hover:bg-gray-500 md:px-3 md:text-sm"
               onClick={handleSetInPoint}
             >
               I
             </button>
             <button
-              className="m-0 rounded-md border bg-gray-400 px-1 py-1 text-sm transition-colors hover:cursor-pointer hover:bg-gray-500 md:px-2 md:py-2 md:text-lg"
+              className="m-0 rounded-md border bg-gray-400 px-1 py-1 text-sm transition-colors hover:cursor-pointer hover:bg-gray-500 md:px-2 md:text-sm"
               onClick={handleSetOutPoint}
             >
               O
             </button>
             <button
-              className="m-0 rounded-md border bg-gray-400 px-1 py-1 text-sm transition-colors hover:cursor-pointer hover:bg-gray-500 md:px-3 md:py-2 md:text-lg"
+              className="m-0 rounded-md border bg-gray-400 px-1 py-1 text-sm transition-colors hover:cursor-pointer hover:bg-gray-500 md:px-3 md:text-sm"
               onClick={onClip}
             >
               Clip
             </button>
           </div>
-          <div className="mr-2 ml-auto flex gap-2 text-center">
-            <p className="m-0 rounded-md bg-gray-400 px-2 py-1 text-sm lg:px-4 lg:py-2 lg:text-base">
+          <div className="mx-auto flex gap-2 text-center">
+            <p className="m-0 rounded-md bg-gray-400 px-2 py-1 text-xs lg:px-4 lg:text-sm">
               In:{" "}
               {inPoint
                 ? formatSecondsToTimecode(inPoint, videoData.framerate)
                 : "00:00:00:00"}
             </p>
-            <p className="m-0 rounded-md bg-gray-400 px-2 py-1 text-sm lg:px-4 lg:py-2 lg:text-base">
+            <p className="m-0 rounded-md bg-gray-400 px-2 py-1 text-sm lg:px-4 lg:text-sm">
               Out:{" "}
               {outPoint
                 ? formatSecondsToTimecode(outPoint, videoData.framerate)
                 : "00:00:00:00"}
             </p>
-            <p className="m-0 rounded-md bg-gray-400 px-2 py-1 text-sm lg:px-4 lg:py-2 lg:text-base">
+            <p className="m-0 rounded-md bg-gray-400 px-2 py-1 text-sm lg:px-4 lg:text-sm">
               Selection:{" "}
               {/* TODO: This calculation becomes incorrect with larger selections */}
               {inPoint && outPoint

@@ -1,9 +1,8 @@
 "use client";
 
-import { Separator } from "@/components/ui/separator";
 import { Clip } from "../types";
 import { formatSecondsToMinSec } from "@/util/formatters";
-import { useEffect, useState } from "react";
+import { forwardRef, RefObject, useEffect, useState } from "react";
 import apiService from "../services/apiServices";
 import Image from "next/image";
 
@@ -31,7 +30,7 @@ function ClipCard({
   clipData: Clip;
 }) {
   return (
-    <li className="relative rounded-lg bg-amber-500">
+    <li className="relative rounded-lg bg-amber-500 p-2">
       <button
         className="absolute top-2 right-2 cursor-pointer rounded-full px-2 py-1 transition-colors duration-300 hover:bg-amber-600"
         onClick={() => deleteClip(clipData.name)}
@@ -48,22 +47,22 @@ function ClipCard({
         alt="Clip thumbnail"
         width={100}
         height={100}
+        className="w-full rounded-lg object-cover opacity-95"
       />
     </li>
   );
 }
 
-export function ClipSidebar({
-  isOpen,
-  clips,
-  deleteClip,
-  videoId,
-}: {
-  isOpen: boolean;
-  clips: Clip[];
-  deleteClip: (name: string) => void;
-  videoId: string | null;
-}) {
+export const ClipSidebar = forwardRef<
+  HTMLDivElement,
+  {
+    isOpen: boolean;
+    clips: Clip[];
+    deleteClip: (name: string) => void;
+    videoId: string | null;
+    isResizing: boolean;
+  }
+>(({ isOpen, clips, deleteClip, videoId, isResizing }, ref) => {
   const [processing, setProcessing] = useState(false);
   const [clipIds, setClipIds] = useState<string[]>([]);
   const [statuses, setStatuses] = useState<string[]>([]);
@@ -187,8 +186,12 @@ export function ClipSidebar({
   return (
     <>
       {isOpen ? (
-        <>
-          <div className="mt-3 w-full">
+        <div
+          ref={ref as RefObject<HTMLDivElement>}
+          data-resizing={isResizing}
+          className="data-resizing:select-none lg:max-w-[600px] lg:min-w-[250px]"
+        >
+          <div className={`mt-3`}>
             <div className="flex justify-around">
               <h2 className="text-2xl text-white lg:m-3">Clips</h2>
               <button
@@ -214,10 +217,10 @@ export function ClipSidebar({
               {errorMessage}
             </p>
           )}
-        </>
+        </div>
       ) : (
         ""
       )}
     </>
   );
-}
+});

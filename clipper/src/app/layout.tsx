@@ -30,7 +30,6 @@ export default function RootLayout({
       >
         <main>
           <div className="grid min-h-dvh grid-rows-[auto_1fr]">
-            <TopNav />
             <div>{children}</div>
           </div>
         </main>
